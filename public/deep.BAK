@@ -1,118 +1,229 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>守護神鑑定 - 個別相談</title>
-  <style>
-    body {
-      background: #f8f8ff;
-      font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-      padding: 20px;
-      color: #333;
-      line-height: 1.6;
-    }
-    h1 {
-      color: #6a4c93;
-      font-size: 1.8em;
-      margin-bottom: 10px;
-    }
-    textarea {
-      width: 90%;
-      padding: 10px;
-      font-size: 1em;
-      margin-bottom: 10px;
-    }
-    button {
-      background: #6a4c93;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      font-size: 1em;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    button:hover {
-      background: #5a3a7e;
-    }
-    .result-box {
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 15px;
-      margin-top: 15px;
-    }
-    .loading {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 3px solid #ccc;
-      border-top: 3px solid #6a4c93;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg);}
-      100% { transform: rotate(360deg);}
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>守護神鑑定｜個別相談</title>
+<style>
+body {
+  background: linear-gradient(to bottom, #1a0b2e, #2e1a47);
+  color: #fff;
+  font-family: 'Zen Old Mincho', serif;
+  text-align: center;
+  padding: 30px;
+}
+.container {
+  max-width: 600px;
+  margin: auto;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 20px;
+}
+textarea {
+  width: 90%;
+  padding: 10px;
+  font-size: 1em;
+  margin-top: 15px;
+  border-radius: 6px;
+  border: none;
+}
+button {
+  margin-top:20px;
+  padding:10px 25px;
+  font-size:1rem;
+  background:#9d4edd;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  transition: all 0.3s ease;
+}
+button:hover {
+  background:#c77dff;
+  transform:scale(1.05);
+}
+.result-box {
+  margin-top:20px;
+  text-align:left;
+  background: rgba(255,255,255,0.05);
+  padding:15px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.2);
+  white-space:pre-wrap;
+}
+.loading-message {
+  margin-top:20px;
+  font-size:1.1em;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink {
+  0% {opacity:1;}
+  50% {opacity:0.4;}
+  100% {opacity:1;}
+}
+.fade-in {
+  opacity:0;
+  transition:opacity 0.8s ease;
+}
+.fade-in.show {
+  opacity:1;
+}
+</style>
 </head>
 <body>
-  <h1>守護神鑑定 - 個別相談</h1>
-  <p>お悩みを入力して「鑑定を受ける」を押してください。</p>
+<div class="container">
+  <h1>守護神 個別相談</h1>
+  <div id="history"></div>
+  <div id="formSection">
+    <textarea id="question" rows="4" placeholder="例: 最近運気が停滞しています…"></textarea><br>
+    <button onclick="consult()">鑑定を受ける</button>
+  </div>
+  <div id="loading" class="loading-message" style="display:none;">
+    現在龍は鑑定を行っています…
+  </div>
+</div>
 
-  <textarea id="question" rows="4" placeholder="例: 家族との関係がうまくいきません..."></textarea><br>
-  <button onclick="consult()">鑑定を受ける</button>
+<script>
+const encouragements = [
+  "心を静め、答えを待ってください…",
+  "あなたの想いは龍に届いています…",
+  "まもなく鑑定が完了します…"
+];
 
-  <div id="result" class="result-box" style="display:none;"></div>
+const paragraphs = [
+  "あなたが抱えてきた苦しみや迷いは、決して無意味なものではありません。その一つひとつが、あなたをより深く、より強く成長させるための大切な糧になっています。いま感じている孤独や戸惑いも、必ずや新しい光へと変わる瞬間が訪れます。",
+  "あなたの心には、本来とても澄んだ温かさと、たぐいまれなる優しさが宿っています。それはどんな苦境にも折れない芯の強さとなり、周りの人を癒す力にもなっています。どうかその力を信じてください。",
+  "今はまだ霧が立ち込め、先が見えにくいかもしれません。しかし、その霧の向こうに続く道は、あなたの選んできた努力と誠実さによってしっかりと形作られています。必ず一歩ずつ進める道が整っているのです。",
+  "恐れずに胸を張ってください。たとえ誰かに理解されなくても、あなた自身が信じた想いこそが真実です。その想いは、これからの運命を導く大切な光になります。",
+  "龍はあなたの歩みを祝福し、さらなる力を授けようとしています。どんなときも「私には価値がある」と何度でも思い出してください。あなたは十分に乗り越えるだけの力を持っています。",
+  "もし心がまた揺らいだときには、ここに戻ってきてください。あなたの話を、私は何度でも受け止め、共に歩む覚悟があります。"
+];
 
-  <script>
-    let loadingInterval;
+async function consult() {
+  const question = document.getElementById('question').value.trim();
+  if (!question) {
+    alert("相談内容を入力してください。");
+    return;
+  }
 
-    async function consult() {
-      const question = document.getElementById('question').value.trim();
-      if (!question) {
-        alert("相談内容を入力してください。");
-        return;
-      }
-      const resultBox = document.getElementById('result');
-      resultBox.style.display = 'block';
-      resultBox.innerHTML = `
-        <div class="loading">
-          <div class="spinner"></div>
-          <span id="loadingText">霊視を開始しています…</span>
-        </div>
-      `;
+  // 履歴に質問を追加
+  const history = document.getElementById('history');
+  const qDiv = document.createElement('div');
+  qDiv.className = "result-box";
+  qDiv.textContent = "【相談】\n" + question;
+  history.appendChild(qDiv);
 
-      const loadingMessages = [
-        "霊視を開始しています…",
-        "神意を受信中…",
-        "言葉を紡いでいます…",
-        "間もなく鑑定結果が出ます…"
-      ];
-      let index = 0;
-      loadingInterval = setInterval(() => {
-        index = (index + 1) % loadingMessages.length;
-        document.getElementById('loadingText').innerText = loadingMessages[index];
-      }, 2000);
+  document.getElementById('formSection').style.display = 'none';
+  const loading = document.getElementById('loading');
+  loading.style.display = 'block';
 
-      try {
-        const res = await fetch("/api/consult", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question })
-        });
-        const data = await res.json();
-        clearInterval(loadingInterval);
-        resultBox.innerHTML = data.result;
-      } catch (error) {
-        console.error(error);
-        clearInterval(loadingInterval);
-        resultBox.innerText = "エラーが発生しました。";
-      }
-    }
-  </script>
+  // 3秒間ランダムに励まし表示
+  for (let i = 0; i < encouragements.length; i++) {
+    loading.textContent = encouragements[i];
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  loading.style.display = 'none';
+
+  // AIに質問を送信
+  const response = await fetch("/api/consult", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      category: "個別相談",
+      question: question
+    })
+  });
+
+  const data = await response.json();
+
+  // 段落を分割
+  const paragraphs = data.result.split(/\n\n+/);
+
+  // 段落を1つずつ表示
+  const resultBox = document.createElement('div');
+  resultBox.className = "result-box";
+  history.appendChild(resultBox);
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = document.createElement('div');
+    p.className = 'fade-in';
+    p.textContent = paragraphs[i];
+    resultBox.appendChild(p);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    p.classList.add('show');
+  }
+
+  // 再相談フォーム
+  const ta = document.createElement('textarea');
+  ta.id = 'followup';
+  ta.rows = 3;
+  ta.placeholder = 'さらに相談する内容を入力';
+  resultBox.appendChild(ta);
+
+  const btn = document.createElement('button');
+  btn.textContent = 'さらに相談する';
+  btn.onclick = followUp;
+  resultBox.appendChild(btn);
+}
+
+  // 履歴に質問を追加
+  const history = document.getElementById('history');
+  const qDiv = document.createElement('div');
+  qDiv.className = "result-box";
+  qDiv.textContent = "【相談】\n" + question;
+  history.appendChild(qDiv);
+
+  document.getElementById('formSection').style.display = 'none';
+  const loading = document.getElementById('loading');
+  loading.style.display = 'block';
+
+  // 3秒間ランダムに励まし表示
+  for (let i = 0; i < encouragements.length; i++) {
+    loading.textContent = encouragements[i];
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  loading.style.display = 'none';
+
+  // 段落を1つずつ表示
+  const resultBox = document.createElement('div');
+  resultBox.className = "result-box";
+  history.appendChild(resultBox);
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = document.createElement('div');
+    p.className = 'fade-in';
+    p.textContent = paragraphs[i];
+    resultBox.appendChild(p);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    p.classList.add('show');
+  }
+
+  // 再相談フォーム
+  const ta = document.createElement('textarea');
+  ta.id = 'followup';
+  ta.rows = 3;
+  ta.placeholder = 'さらに相談する内容を入力';
+  resultBox.appendChild(ta);
+
+  const btn = document.createElement('button');
+  btn.textContent = 'さらに相談する';
+  btn.onclick = followUp;
+  resultBox.appendChild(btn);
+}
+
+async function followUp() {
+  const followup = document.getElementById('followup').value.trim();
+  if (!followup) {
+    alert("追加相談を入力してください。");
+    return;
+  }
+  document.getElementById('formSection').style.display = 'block';
+  document.getElementById('question').value = followup;
+  document.getElementById('followup').parentElement.remove();
+}
+</script>
 </body>
 </html>

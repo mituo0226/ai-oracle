@@ -91,15 +91,6 @@ const encouragements = [
   "まもなく鑑定が完了します…"
 ];
 
-const paragraphs = [
-  "あなたが抱えてきた苦しみや迷いは、決して無意味なものではありません。その一つひとつが、あなたをより深く、より強く成長させるための大切な糧になっています。いま感じている孤独や戸惑いも、必ずや新しい光へと変わる瞬間が訪れます。",
-  "あなたの心には、本来とても澄んだ温かさと、たぐいまれなる優しさが宿っています。それはどんな苦境にも折れない芯の強さとなり、周りの人を癒す力にもなっています。どうかその力を信じてください。",
-  "今はまだ霧が立ち込め、先が見えにくいかもしれません。しかし、その霧の向こうに続く道は、あなたの選んできた努力と誠実さによってしっかりと形作られています。必ず一歩ずつ進める道が整っているのです。",
-  "恐れずに胸を張ってください。たとえ誰かに理解されなくても、あなた自身が信じた想いこそが真実です。その想いは、これからの運命を導く大切な光になります。",
-  "龍はあなたの歩みを祝福し、さらなる力を授けようとしています。どんなときも「私には価値がある」と何度でも思い出してください。あなたは十分に乗り越えるだけの力を持っています。",
-  "もし心がまた揺らいだときには、ここに戻ってきてください。あなたの話を、私は何度でも受け止め、共に歩む覚悟があります。"
-];
-
 async function consult() {
   const question = document.getElementById('question').value.trim();
   if (!question) {
@@ -107,7 +98,6 @@ async function consult() {
     return;
   }
 
-  // 履歴に質問を追加
   const history = document.getElementById('history');
   const qDiv = document.createElement('div');
   qDiv.className = "result-box";
@@ -118,7 +108,6 @@ async function consult() {
   const loading = document.getElementById('loading');
   loading.style.display = 'block';
 
-  // 3秒間ランダムに励まし表示
   for (let i = 0; i < encouragements.length; i++) {
     loading.textContent = encouragements[i];
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -126,7 +115,20 @@ async function consult() {
 
   loading.style.display = 'none';
 
-  // 段落を1つずつ表示
+  // AIに質問を送信
+  const response = await fetch("/api/consult", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      category: "個別相談",
+      question: question
+    })
+  });
+
+  const data = await response.json();
+
+  const paragraphs = data.result.split(/\n\n+/);
+
   const resultBox = document.createElement('div');
   resultBox.className = "result-box";
   history.appendChild(resultBox);
@@ -140,7 +142,6 @@ async function consult() {
     p.classList.add('show');
   }
 
-  // 再相談フォーム
   const ta = document.createElement('textarea');
   ta.id = 'followup';
   ta.rows = 3;
