@@ -11,9 +11,7 @@ body {
   font-family: 'Zen Old Mincho', serif;
   text-align: center;
   padding: 30px;
-  overflow-x: hidden;
 }
-
 .container {
   max-width: 600px;
   margin: auto;
@@ -21,11 +19,7 @@ body {
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 0 20px rgba(147,51,234,0.4);
-  opacity:0;
-  transition: opacity 1s;
 }
-
 textarea {
   width: 90%;
   padding: 10px;
@@ -34,7 +28,6 @@ textarea {
   border-radius: 6px;
   border: none;
 }
-
 button {
   margin-top:20px;
   padding:10px 25px;
@@ -46,12 +39,10 @@ button {
   cursor:pointer;
   transition: all 0.3s ease;
 }
-
 button:hover {
   background:#c77dff;
   transform:scale(1.05);
 }
-
 .result-box {
   margin-top:20px;
   text-align:left;
@@ -61,97 +52,78 @@ button:hover {
   border:1px solid rgba(255,255,255,0.2);
   white-space:pre-wrap;
 }
-
-/* ローディング画面 */
-#loadingScreen {
-  position: fixed;
-  top:0; left:0; right:0; bottom:0;
-  background: #000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  z-index:9999;
-  animation: fadeIn 1s forwards;
-}
-
-#loadingScreen p {
-  color:#fff;
-  font-size:1.2em;
-  margin-top:1em;
+.loading-message {
+  margin-top:20px;
+  font-size:1.1em;
   animation: blink 1.5s infinite;
 }
-
 @keyframes blink {
   0% {opacity:1;}
   50% {opacity:0.4;}
   100% {opacity:1;}
 }
-
-@keyframes fadeIn {
-  from {opacity:0;}
-  to {opacity:1;}
-}
-
-@keyframes fadeOut {
-  from {opacity:1;}
-  to {opacity:0;}
-}
 </style>
 </head>
 <body>
-
-<!-- ローディング画面 -->
-<div id="loadingScreen">
-  <img src="https://i.gifer.com/ZZ5H.gif" width="100" alt="Loading...">
-  <p>神意を降ろしています…</p>
-</div>
-
 <div class="container">
   <h1>守護神 個別相談</h1>
   <p>あなたの悩みを入力し「鑑定を受ける」を押してください。</p>
-
-  <textarea id="question" rows="4" placeholder="例: 家族との関係がうまくいきません…"></textarea><br>
-  <button onclick="consult()">鑑定を受ける</button>
-
+  <div id="formSection">
+    <textarea id="question" rows="4" placeholder="例: 最近運気が停滞しています…"></textarea><br>
+    <button onclick="consult()">鑑定を受ける</button>
+  </div>
+  <div id="loading" class="loading-message" style="display:none;">
+    現在龍は鑑定し返答を入力しているのでしばらくお待ちください…
+  </div>
   <div id="result" class="result-box" style="display:none;"></div>
 </div>
-
 <script>
-// ローディング演出
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    const loader = document.getElementById('loadingScreen');
-    loader.style.animation = 'fadeOut 1s forwards';
-    setTimeout(() => {
-      loader.remove();
-      document.querySelector('.container').style.opacity = '1';
-    }, 1000);
-  }, 3000);
-});
-
 async function consult() {
   const question = document.getElementById('question').value.trim();
   if (!question) {
     alert("相談内容を入力してください。");
     return;
   }
+
+  document.getElementById('formSection').style.display = 'none';
+  const loading = document.getElementById('loading');
+  loading.style.display = 'block';
+
+  // 3秒待って結果表示
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  loading.style.display = 'none';
   const resultBox = document.getElementById('result');
   resultBox.style.display = 'block';
-  resultBox.innerHTML = "霊視中…";
+  resultBox.innerHTML = 
+    "【鑑定結果】\n" +
+    "あなたの悩みには深い因縁が影響しています。\n" +
+    "心の迷いを整理し、明日からの一歩を変えていくことが必要です。\n\n" +
+    "さらに詳しい状況を教えていただけますか？\n\n" +
+    "<textarea id='followup' rows='3' placeholder='追加の質問や詳しい状況を入力'></textarea><br>" +
+    "<button onclick='followUp()'>さらに相談する</button>";
+}
 
-  try {
-    const res = await fetch("/api/consult", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question })
-    });
-    const data = await res.json();
-    resultBox.innerHTML = data.result;
-  } catch (error) {
-    console.error(error);
-    resultBox.innerText = "エラーが発生しました。";
+async function followUp() {
+  const followup = document.getElementById('followup').value.trim();
+  if (!followup) {
+    alert("追加相談を入力してください。");
+    return;
   }
+  const resultBox = document.getElementById('result');
+  resultBox.innerHTML = 
+    "<div class='loading-message'>龍が再度鑑定を行っています…</div>";
+
+  // 3秒待って再結果
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  resultBox.innerHTML = 
+    "【再鑑定結果】\n" +
+    "あなたの思いには強い念が宿っています。\n" +
+    "新たな運命を切り開くために、心の声を大切にしてください。\n\n" +
+    "さらに相談される場合は、再度入力してください。\n\n" +
+    "<textarea id='followup' rows='3' placeholder='さらに相談する内容を入力'></textarea><br>" +
+    "<button onclick='followUp()'>さらに相談する</button>";
 }
 </script>
 </body>
