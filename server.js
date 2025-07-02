@@ -13,24 +13,28 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// もしdeep.htmlをpublicフォルダに置く場合
+// ⭐ここを追加: publicフォルダを静的ファイルとして公開する
 app.use(express.static("public"));
 
+// POSTのAPIは今まで通り
 app.post("/api/consult", async (req, res) => {
-  const { question } = req.body;
+  const { category, question } = req.body;
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: `あなたは霊能者「龍」です。
-相談者の悩みに神の言葉を厳かに、優しい口調で伝えます。`
+          content: `あなたは霊能者「龍」です。相談者の悩みに神の言葉を厳かに優しい口調で伝えます。`
         },
         {
           role: "user",
-          content: question
+          content: `【相談ジャンル】
+${category}
+
+【相談内容】
+${question}`
         }
       ],
       max_tokens: 800,
@@ -46,7 +50,8 @@ app.post("/api/consult", async (req, res) => {
   }
 });
 
-const port = 3000;
+// Render用にPORT環境変数を使う
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:3000`);
+  console.log(`Server running at http://localhost:${port}`);
 });
