@@ -108,12 +108,18 @@ async function consult() {
   const loading = document.getElementById('loading');
   loading.style.display = 'block';
 
-  for (let i = 0; i < encouragements.length; i++) {
-    loading.textContent = encouragements[i];
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
+  let encouragementIndex = 0;
+  let keepShowing = true;
 
-  loading.style.display = 'none';
+  // ランダム励まし表示ループ
+  const encouragementLoop = async () => {
+    while (keepShowing) {
+      loading.textContent = encouragements[encouragementIndex % encouragements.length];
+      encouragementIndex++;
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+  };
+  encouragementLoop();
 
   // AIに質問を送信
   const response = await fetch("/api/consult", {
@@ -126,6 +132,9 @@ async function consult() {
   });
 
   const data = await response.json();
+
+  keepShowing = false;
+  loading.style.display = 'none';
 
   const paragraphs = data.result.split(/\n\n+/);
 
