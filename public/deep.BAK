@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>守護神鑑定 - 個別相談</title>
+  <style>
+    body {
+      background: #f8f8ff;
+      font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      padding: 20px;
+      color: #333;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #6a4c93;
+      font-size: 1.8em;
+      margin-bottom: 10px;
+    }
+    textarea {
+      width: 90%;
+      padding: 10px;
+      font-size: 1em;
+      margin-bottom: 10px;
+    }
+    button {
+      background: #6a4c93;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 1em;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #5a3a7e;
+    }
+    .result-box {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-top: 15px;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #ccc;
+      border-top: 3px solid #6a4c93;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+  </style>
+</head>
+<body>
+  <h1>守護神鑑定 - 個別相談</h1>
+  <p>お悩みを入力して「鑑定を受ける」を押してください。</p>
+
+  <textarea id="question" rows="4" placeholder="例: 家族との関係がうまくいきません..."></textarea><br>
+  <button onclick="consult()">鑑定を受ける</button>
+
+  <div id="result" class="result-box" style="display:none;"></div>
+
+  <script>
+    let loadingInterval;
+
+    async function consult() {
+      const question = document.getElementById('question').value.trim();
+      if (!question) {
+        alert("相談内容を入力してください。");
+        return;
+      }
+      const resultBox = document.getElementById('result');
+      resultBox.style.display = 'block';
+      resultBox.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          <span id="loadingText">霊視を開始しています…</span>
+        </div>
+      `;
+
+      const loadingMessages = [
+        "霊視を開始しています…",
+        "神意を受信中…",
+        "言葉を紡いでいます…",
+        "間もなく鑑定結果が出ます…"
+      ];
+      let index = 0;
+      loadingInterval = setInterval(() => {
+        index = (index + 1) % loadingMessages.length;
+        document.getElementById('loadingText').innerText = loadingMessages[index];
+      }, 2000);
+
+      try {
+        const res = await fetch("/api/consult", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+        const data = await res.json();
+        clearInterval(loadingInterval);
+        resultBox.innerHTML = data.result;
+      } catch (error) {
+        console.error(error);
+        clearInterval(loadingInterval);
+        resultBox.innerText = "エラーが発生しました。";
+      }
+    }
+  </script>
+</body>
+</html>
